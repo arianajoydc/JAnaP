@@ -5,18 +5,20 @@ import math
 import scipy.spatial
 import skimage.draw
 import skimage.measure
+import os 
 
 from utility import shoelace_area
 
 class CellShapes():
 
-    def __init__(self, image, path):
+    def __init__(self, image, path, original):
         self.__area_image = None
         self.__sorted_hull_points = None
         self.__ellipse_parameters = None
 
         self.image = image
         self.path = path
+        self.original = original
 
     def get_sector(self):
         r_min, r_max = None, None
@@ -165,8 +167,55 @@ class CellShapes():
         ls = min([float(a), float(b)]) / max([float(a), float(b)])
 
         return ab, ls
+
+    def get_intensity(self):
+
+        blue_channel = self.original[:,:,0]
+        green_channel = self.original[:,:,1]
+        red_channel = self.original[:,:,2]
+
+        path = numpy.asarray(self.path)
+
+        area_image = numpy.zeros(red_channel.shape)
+        rr, cc = skimage.draw.polygon(path[:, 0], path[:, 1], red_channel.shape)
+        area_image[rr, cc] = 1
+
+        blue_cell_mean = (numpy.sum(area_image * blue_channel) / numpy.count_nonzero(area_image))
+
+        green_cell_mean = (numpy.sum(area_image * green_channel) / numpy.count_nonzero(area_image))
+
+        red_cell_mean = (numpy.sum(area_image * red_channel) /  numpy.count_nonzero(area_image))
+
+        return red_cell_mean, green_cell_mean, blue_cell_mean
+
+    def get_integrateddensity(self): 
+
+        blue_channel = self.original[:,:,0]
+        green_channel = self.original[:,:,1]
+        red_channel = self.original[:,:,2]
+
+        path = numpy.asarray(self.path)
+
+        area_image = numpy.zeros(red_channel.shape)
+        rr, cc = skimage.draw.polygon(path[:, 0], path[:, 1], red_channel.shape)
+        area_image[rr, cc] = 1
+
+        blue_cell_mean = (numpy.sum(area_image * blue_channel) / numpy.count_nonzero(area_image))
+        blue_cell_int = numpy.sum(area_image * blue_channel)
+
+
+        green_cell_mean = (numpy.sum(area_image * green_channel) / numpy.count_nonzero(area_image))
+        green_cell_int = numpy.sum(area_image * green_channel)
+
+
+        red_cell_mean = (numpy.sum(area_image * red_channel) /  numpy.count_nonzero(area_image))
+        red_cell_int = numpy.sum(area_image * red_channel)
+
+
+        return red_cell_int, green_cell_int, blue_cell_int
+
     
-    def get_angle(self):
+    def get_angle(self, shape_angle_image):
         sorted_hull_points = self.get_convex_hull()
         hull_point_array = numpy.asarray(sorted_hull_points)
 
@@ -192,6 +241,7 @@ class CellShapes():
                 add_points += 10
         
         xc, yc, a, b, phi = ellipse_hull.params
+        
         # need to calculate the slope of the line relative to the image, not the x,y axis.
         a_p1 = xc + a*math.cos(phi), yc + a*math.sin(phi)
         a_p2 = xc - a*math.cos(phi), yc - a*math.sin(phi)
@@ -203,21 +253,32 @@ class CellShapes():
         m = ((y_max - a_p1[0]) - (y_max - a_p2[0])) / (a_p1[1] - a_p2[1])
         image_angle = math.atan(m)
         image_angle_deg = math.degrees(image_angle)
+    
+
+        # subtracting 90 to return angle with respect to *apparent* x-axis, as opposed to calculated x-axis. 
+        image_angle_deg = image_angle_deg - 90
+
         if image_angle_deg < 0:
             image_angle_deg += 180
 
-        #import matplotlib.pyplot
+        if shape_angle_image is not None: 
+
+            import matplotlib.pyplot
+            import time 
          
-        #matplotlib.pyplot.figure(15)
-        #matplotlib.pyplot.imshow(self.image)
-        #for hp in hull_point_array:
-        #   r, c = hp
-        #   matplotlib.pyplot.plot(r, c, 'o')
-        #   matplotlib.pyplot.scatter([c], [r], color='#AA3C39', marker=',')
+            matplotlib.pyplot.figure(15)
+            matplotlib.pyplot.imshow(self.image)
+            for hp in hull_point_array:
+                r, c = hp
+                #matplotlib.pyplot.plot(r, c, 'o')
+                matplotlib.pyplot.scatter([c], [r], color='#AA3C39', marker=',')
 
-        #matplotlib.pyplot.plot([a_p1[1], a_p2[1]], [a_p1[0], a_p2[0]], 'y') #Change y to change color 
-        #matplotlib.pyplot.plot([b_p1[1], b_p2[1]], [b_p1[0], b_p2[0]], 'c') #Change c to change color 
-        #matplotlib.pyplot.savefig('/Users/adamlanda/Documents/JAnaP/data/testfig.png')
-        #matplotlib.pyplot.close()
+            matplotlib.pyplot.plot([a_p1[1], a_p2[1]], [a_p1[0], a_p2[0]], 'y') #Change y to change color 
+            matplotlib.pyplot.plot([b_p1[1], b_p2[1]], [b_p1[0], b_p2[0]], 'c') #Change c to change color 
+            matplotlib.pyplot.text(yc, xc, str(round(image_angle_deg,2)), fontsize = 10, color = 'white')
+            matplotlib.pyplot.savefig(shape_angle_image)
+            matplotlib.pyplot.close()
 
-        return image_angle_deg
+        return image_angle_deg 
+
+    

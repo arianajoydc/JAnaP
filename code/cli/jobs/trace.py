@@ -71,6 +71,7 @@ class Trace(BaseJob):
 
         job_waypoints_row = None
         file_name = job_entity_row["file_name"]
+        image_file_name = job_entity_row["seed_source_image"]
 
         for waypoints_row in image_waypoints:
             center_r, center_c = waypoints_row.get("geometric_center")
@@ -82,7 +83,7 @@ class Trace(BaseJob):
                 job_waypoints_row = waypoints_row
 
         waypoints = job_waypoints_row["waypoints"]
-        image_path = os.path.join(self.__input_image_directory, file_name)
+        image_path = os.path.join(self.__input_image_directory, image_file_name)
 
         perimeter_file_key = key + ".json"
 

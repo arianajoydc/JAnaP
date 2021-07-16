@@ -28,6 +28,9 @@ class Shapes(BaseJob):
         self.__shape_directory = \
             project.get_artifacts_directory("shape-factors")
 
+        self.__shape_angle_image_directory = \
+            project.get_artifacts_directory("shape-angle-image")
+
 
     def get_job_headers(self, entity_map):
         job_headers = []
@@ -85,7 +88,7 @@ class Shapes(BaseJob):
             perimeter = json.load(f)
 
         # Compute shape factors
-        shape_data = self.__calculate_shape_data(image_path, perimeter, job_entity_row)
+        shape_data = self.__calculate_shape_data(image_path, perimeter, job_entity_row, key)
 
         # Save shape factor lines
         shape_file_key = key + ".json"
@@ -99,7 +102,7 @@ class Shapes(BaseJob):
             "image_file": job_entity_row["file_name"]
         }
 
-    def __calculate_shape_data(self, image_path, perimeter_path, job_entity_row):
+    def __calculate_shape_data(self, image_path, perimeter_path, job_entity_row, key):
         image_original = cells.images.load_image(image_path)
 
         image_intensity, image_cost = \
@@ -111,7 +114,7 @@ class Shapes(BaseJob):
             self.__project.get_parameter("image_scale", job_entity_row, w)
 
         shape_calculator = cells.shapes.CellShapes(image_intensity,
-                                                   perimeter_path)
+                                                   perimeter_path, image_original)
 
         shape_data = {}
 
@@ -132,6 +135,10 @@ class Shapes(BaseJob):
             shape_calculator.get_hull_aspect_ratios()
             
         #adding angle
-        shape_data["angle"] = shape_calculator.get_angle()
+        shape_image_file_key = key + ".png"
+        shape_image_file = os.path.join(self.__shape_angle_image_directory, shape_image_file_key)
+        shape_data["angle"] = shape_calculator.get_angle(shape_image_file)
+        shape_data["intensity"] = shape_calculator.get_intensity()
+        shape_data["integrateddensity"] = shape_calculator.get_integrateddensity()
 
         return shape_data
