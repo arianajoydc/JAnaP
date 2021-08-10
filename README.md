@@ -51,3 +51,7 @@ $ jupyter nbextension enable --py widgetsnbextension
 ### Checking for Errors
 
 In order to check for errors after running jobs, navigate to your main repository, then go to: data / projects / 'your project name' / system / job errors
+
+### Angle of Orientation Plots
+
+In order to check the plots of the major axis along with the angle of orientation, go to data > projects > "your project" > shape-angle-image. A new plot is created for each cell and variant. 
