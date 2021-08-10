@@ -93,6 +93,7 @@ def generate_cell_data_file(project):
     output_row.extend(["Hull Aspect Ratio (< 1)"])
     output_row.extend(["Angle of Major Axis (degrees) wrt Apparent X-Axis (r)"])
     output_row.extend(["Mean Fluorescent Intensity (RGB)"])
+    output_row.extend(["Integrated Density (RGB)"])
 
 
 
@@ -172,7 +173,8 @@ def generate_cell_data_file(project):
                                shape_data.get("convex_area", ""),
                                shape_data.get("hull_aspect_ratio", ""), 
                                shape_data.get("angle", ""), 
-                               shape_data.get("intensity", "")])
+                               shape_data.get("intensity", ""),
+                               shape_data.get("integrateddensity", "")])
                                #shape_data.get("aspect_ratio", "")])
         else:
             # Perimeter
